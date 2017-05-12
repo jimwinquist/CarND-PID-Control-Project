@@ -34,6 +34,23 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid variable.
+  /*
+   * I tuned the tau_p, tau_i, and tau_d parameters manually through trial and error using
+   * debug print statements and trying to lower the crosstrack error.
+   *
+   * I began with all values near 0 and first tuned the proportional control until the
+   * overall steering oscillation seemed about right, neither underturning or overturning.
+   * I found that a value near 0.2 for tau_p gave optimal proportional control.
+   *
+   * Then I tuned the derivative term to keep the car from overshooting the center line.
+   * I found that the derivative term had to be relatively high in order to keep the car
+   * from wandering all over the track. I found a value of 10.0 to work well for tau_d.
+   *
+   * For the integral term I assumed that there would be very little bias in the steering
+   * and left this term as a very low value just to add a small amount of correction
+   * present for this value. I used a value of 0.001 for tau_i.
+   */
+  pid.Init(.2, .001, 10.0);
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -57,6 +74,8 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
+          pid.UpdateError(cte);
+          steer_value = pid.TotalError();
           
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
